@@ -27,8 +27,7 @@ regd_users.post("/login", (req,res) => {
   //Write your code here
   const username = req.body.username;
   const password = req.body.password;
-  // const { username, password } = req.body;
-  console.log(username + password)
+
   if (!username || !password){
     return res.status(404).json({message:"Error in login or password!"})
   } else{

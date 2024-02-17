@@ -3,41 +3,31 @@ const axios = require('axios')
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
-const Data = require("../userData/data")
 const public_users = express.Router();
 
-const db = 'mongodb+srv://Andrew:Pass123321@cluster0.hgdmsbr.mongodb.net'
-
-const Exist = async (user) => {
-  try {
-    let exist = await Data.findOne({ username: user });
-    return !!exist;
-  } catch (error) {
-    console.error(error);
+const Exist = (username)=>{
+  let exist = users.filter((name)=>{
+    return name.username == username
+  });
+  if (exist.length > 0){
+    return true;
+  }else {
     return false;
   }
-};
+}
+public_users.post("/register", (req,res) => {
+  const user = req.body.username;
+  const pass = req.body.password;
 
-public_users.post("/register", async (req, res) => {
-  const { username, password } = req.body;
-  const data = new Data({ username, password });
-
-  if (username && password) {
-    try {
-      const userExists = await Exist(username);
-
-      if (!userExists) {
-        await data.save();
-        res.send("User " + username + " has been added!");
-      } else {
-        return res.json({ message: "Username is already taken!" });
-      }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send("Error in registration, try again");
+  if (user && pass){
+    if (!Exist(user)){
+      users.push({"username":user,"password":pass});
+      return res.send("User "+ user+ " has been added!")
+    }else{
+      return res.status(404).json({message:"Username is already taken!"})
     }
-  } else {
-    return res.send("Error in registration, try again");
+  }{
+    return res.send("Error in registration, try again")
   }
 });
 
