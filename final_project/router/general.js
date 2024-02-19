@@ -8,34 +8,22 @@ const public_users = express.Router();
 
 const db = 'mongodb+srv://Andrew:Pass123321@cluster0.hgdmsbr.mongodb.net'
 
-const Exist = async (user) => {
-  try {
-    let exist = await Data.findOne({ username: user });
-    return !!exist;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+const Exist =  (user) => {
+    let exist =  Data.findOne({ username: user });
+    return exist;
 };
 
-public_users.post("/register", async (req, res) => {
+public_users.post("/register", (req, res) => {
   const { username, password } = req.body;
   const data = new Data({ username, password });
-
   if (username && password) {
-    try {
-      const userExists = await Exist(username);
-
+      const userExists =  Exist(username);
       if (!userExists) {
-        await data.save();
+        data.save();
         res.send("User " + username + " has been added!");
       } else {
         return res.json({ message: "Username is already taken!" });
       }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).send("Error in registration, try again");
-    }
   } else {
     return res.send("Error in registration, try again");
   }
@@ -43,9 +31,7 @@ public_users.post("/register", async (req, res) => {
 
 // Get the book list available in the shop
 public_users.get('/',async function (req, res) {
-
   res.send(await books);
- 
 });
 
 // Get book details based on ISBN

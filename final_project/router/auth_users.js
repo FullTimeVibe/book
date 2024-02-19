@@ -2,6 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 let books = require("./booksdb.js");
 const regd_users = express.Router();
+const Data = require("../userData/data")
+
 
 let users = [];
 
@@ -10,29 +12,27 @@ const isValid = (username)=>{ //returns boolean
 //write code to check is the username is valid
 }
 
-const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
-let auth = users.filter((user) => {
-  return (user.username == username && user.password == password);
-})
- if (auth.length > 0){
-  return true;
- } else {
-  return false;
- }
+const authenticatedUser = async (username,password)=>{ 
+  try{
+    let check = await Data.findOne({username: username, password: password})
+    return check;
+  }catch (err){
+    console.log(err)
+    return false;
+  }
+  
 }
 
 //only registered users can login
-regd_users.post("/login", (req,res) => {
+regd_users.post("/login", async (req,res) => {
   //Write your code here
   const username = req.body.username;
   const password = req.body.password;
-  // const { username, password } = req.body;
-  console.log(username + password)
+  const Auth = await authenticatedUser(username,password);
   if (!username || !password){
     return res.status(404).json({message:"Error in login or password!"})
   } else{
-    if (authenticatedUser(username,password)){
+    if (Auth){
       const accessToken = jwt.sign({
         data: password
       }, 'access',{expiresIn: 60*60});
@@ -53,9 +53,7 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const user = req.session.authorization.username;
   const isbn = req.params.isbn;
   let book = books[isbn];
-
   let review = req.body.review;
-
   if (review){
     books[isbn].reviews[user] = review;
 
