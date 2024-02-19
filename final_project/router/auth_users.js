@@ -12,23 +12,17 @@ const isValid = (username)=>{ //returns boolean
 //write code to check is the username is valid
 }
 
-const authenticatedUser = async (username,password)=>{ 
-  try{
-    let check = await Data.findOne({username: username, password: password})
-    return check;
-  }catch (err){
-    console.log(err)
-    return false;
-  }
-  
+const authenticatedUser =  (username,password)=>{ 
+    let check =  Data.findOne({username: username, password: password})
+    return check;  
 }
 
 //only registered users can login
-regd_users.post("/login", async (req,res) => {
+regd_users.post("/login",  (req,res) => {
   //Write your code here
   const username = req.body.username;
   const password = req.body.password;
-  const Auth = await authenticatedUser(username,password);
+  const Auth = authenticatedUser(username,password);
   if (!username || !password){
     return res.status(404).json({message:"Error in login or password!"})
   } else{
