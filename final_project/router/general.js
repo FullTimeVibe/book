@@ -6,7 +6,7 @@ let users = require("./auth_users.js").users;
 const Data = require("../userData/data")
 const public_users = express.Router();
 
-const db = 'mongodb+srv://Andrew:Pass123321@cluster0.hgdmsbr.mongodb.net'
+const db = 'mongodb+srv'
 
 const Exist =  (user) => {
     let exist =  Data.findOne({ username: user });
