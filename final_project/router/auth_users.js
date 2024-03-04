@@ -7,7 +7,7 @@ const Book = require("../userData/book")
 
 
 
-const db = 'mongodb+srv://Andrew:123321@cluster0.hgdmsbr.mongodb.net/userData'
+const db = 'mongodb+srv://Andrew:@cluster0.hgdmsbr.mongodb.net/userData'
 
 
 const authenticatedUser = async (user,pass)=>{ 
