@@ -1,32 +1,28 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-let books = require("./booksdb.js");
+// let books = require("./booksdb.js");
 const regd_users = express.Router();
 const Data = require("../userData/data")
+const Book = require("../userData/book")
 
 
-let users = [];
+
+const db = 'mongodb+srv://Andrew:123321@cluster0.hgdmsbr.mongodb.net/userData'
 
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
+const authenticatedUser = async (user,pass)=>{ 
+    let check = await Data.findOne({ username:user, password:pass});
+    return check;
 }
 
-const authenticatedUser =  (username,password)=>{ 
-    let check =  Data.findOne({username: username, password: password})
-    return check;  
-}
-
-//only registered users can login
-regd_users.post("/login",  (req,res) => {
-  //Write your code here
+regd_users.post("/login", async (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
-  const Auth = authenticatedUser(username,password);
+  auth = await authenticatedUser(username,password);
   if (!username || !password){
     return res.status(404).json({message:"Error in login or password!"})
   } else{
-    if (Auth){
+    if (auth){
       const accessToken = jwt.sign({
         data: password
       }, 'access',{expiresIn: 60*60});
@@ -42,34 +38,68 @@ regd_users.post("/login",  (req,res) => {
 
 });
 
+regd_users.delete("/deleteUser", async (req, res) => {
+  const user = req.body.username;
+  const pass = req.body.password;
+  check = await authenticatedUser(user,pass);
+  if (check){
+  await Data.deleteOne({username:user})
+  res.send(`User ${user} has been deleted!`)
+} else{
+  res.send("Incorrecet username or password!")
+}
+});
+
+
+regd_users.post("/addbook",(req,res)=>{
+  const {ibsn,author,title} = req.body;
+  const reviews = {null:null}
+
+  const book = new Book({ibsn,author,title,reviews});
+  book
+  .save()
+  .then(async ()=>{
+    console.log(await Book.find())
+  })
+  res.send("done")
+})
+
 // Add a book review
-regd_users.put("/auth/review/:isbn", (req, res) => {
+regd_users.put("/auth/review/:isbn",async (req, res) => {
   const user = req.session.authorization.username;
   const isbn = req.params.isbn;
-  let book = books[isbn];
+ let book = await Book.findOne({ ibsn: isbn });
+  if (!book) {
+    return res.send("Book not found");
+  }
   let review = req.body.review;
   if (review){
-    books[isbn].reviews[user] = review;
-
+    await Book.findOneAndUpdate(
+      { ibsn: isbn },
+      { $set: { [`reviews.${user}`]: req.body.review } }
+    );
   } else{
     res.send("review is empty")
   }
   res.send('Rewiew been updated')
 });
 
-regd_users.delete("/auth/review/:isbn", (req, res) => {
+regd_users.delete("/auth/review/:isbn", async(req, res) => {
   const user = req.session.authorization.username;
   const isbn = req.params.isbn;
-  if (!books[isbn]){
-    return res.send("Invalid IBSN");
-  } else if (!books[isbn].reviews[user]){
-    return res.send(`You, ${user}, doesn't have any reviews!`)
+  if (await Book.find({ ibsn: isbn, reviews: [`reviews.${user}`] })){
+    return res.send(`You, ${user}, doesn't have any reviews, on this book!`)
   } else {
-    delete books[isbn].reviews[user];
+    await Book.findOneAndUpdate(
+      { ibsn: isbn },
+      {
+        $unset: {
+          [`reviews.${user}`]: 1
+        }
+      }
+    );
     res.send("Review has benn deleted")
   }
 });
 
 module.exports.authenticated = regd_users;
-module.exports.isValid = isValid;
-module.exports.users = users;
