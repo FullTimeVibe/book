@@ -8,7 +8,7 @@ const Book = require("../userData/book")
 
 const public_users = express.Router();
 
-const db = 'mongodb+srv://Andrew:123321@cluster0.hgdmsbr.mongodb.net/userData'
+const db = 'mongodb+srv://Andrew:@cluster0.hgdmsbr.mongodb.net/userData'
 
 const Exist = async (user) => {
     let exist = await Data.findOne({username: user });
