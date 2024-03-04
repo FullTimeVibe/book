@@ -8,7 +8,7 @@ const Data = require("./userData/data")
 
 const app = express();
 
-const db = 'mongodb+srv://Andrew:123321@cluster0.hgdmsbr.mongodb.net/userData'
+const db = 'mongodb+srv://Andrew:@cluster0.hgdmsbr.mongodb.net/userData'
 
 mongoose
     .connect(db)
