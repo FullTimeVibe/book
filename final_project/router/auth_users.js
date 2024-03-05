@@ -1,13 +1,20 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-// let books = require("./booksdb.js");
 const regd_users = express.Router();
-const Data = require("../userData/data")
-const Book = require("../userData/book")
+const Data = require("../userData/data");
+const Book = require("../userData/book");
+const multer = require("multer");
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './Books')
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now()+".pdf")
+  }
+})
+const upload = multer({ storage: storage })
 
-
-
-const db = 'mongodb+srv://Andrew:123321@cluster0.hgdmsbr.mongodb.net/userData'
+const db = 'mongodb+srv://Andrew:@cluster0.hgdmsbr.mongodb.net/userData'
 
 
 const authenticatedUser = async (user,pass)=>{ 
@@ -35,10 +42,9 @@ regd_users.post("/login", async (req,res) => {
       return res.status(208).json({message:"Invalid Username or password"})
     }
   }
-
 });
 
-regd_users.delete("/deleteUser", async (req, res) => {
+regd_users.delete("/auth/deleteUser", async (req, res) => {
   const user = req.body.username;
   const pass = req.body.password;
   check = await authenticatedUser(user,pass);
@@ -50,21 +56,45 @@ regd_users.delete("/deleteUser", async (req, res) => {
 }
 });
 
-
-regd_users.post("/addbook",(req,res)=>{
+regd_users.post("/auth/addbook", upload.single('File'), (req,res)=>{
   const {ibsn,author,title} = req.body;
   const reviews = {null:null}
-
-  const book = new Book({ibsn,author,title,reviews});
+  const file = req.file.filename
+  const book = new Book({file,ibsn,author,title,reviews});
   book
   .save()
   .then(async ()=>{
-    console.log(await Book.find())
-  })
   res.send("done")
 })
+  .catch((err)=>{
+  console.log(err);
+  res.send("Error. Check data!")
+})
+})
 
-// Add a book review
+regd_users.get("/auth/allusers",async (req,res)=>{
+  const user = req.session.authorization.username;
+  const root = await Data.findOne({username:user},{_id:0, root:1});
+  if (root.root == "Admin"){
+    let users = await Data.find();
+    res.send(users)
+  } else {
+    res.send("You have no access!")
+  }
+})
+
+regd_users.post("/auth/allusers",async (req,res)=>{
+  const admin = req.session.authorization.username;
+  const user = req.body.username;
+  const root = await Data.findOne({username:admin},{_id:0, root:1});
+  if (root.root == "Admin"){
+    await Data.findOneAndUpdate({username:user},{$set: {root:"Admin"}})
+    res.send("User root updated")
+  } else {
+    res.send("You have no access!")
+  }
+})
+
 regd_users.put("/auth/review/:isbn",async (req, res) => {
   const user = req.session.authorization.username;
   const isbn = req.params.isbn;

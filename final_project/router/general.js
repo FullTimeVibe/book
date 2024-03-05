@@ -1,14 +1,12 @@
 const express = require('express');
-const axios = require('axios')
-// let books = require("./booksdb.js");
-let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const Data = require("../userData/data")
 const Book = require("../userData/book")
+const fs = require("fs")
 
 const public_users = express.Router();
 
-const db = 'mongodb+srv://Andrew:123321@cluster0.hgdmsbr.mongodb.net/userData'
+const db = 'mongodb+srv://Andrew:@cluster0.hgdmsbr.mongodb.net/userData'
 
 const Exist = async (user) => {
     let exist = await Data.findOne({username: user });
@@ -19,11 +17,6 @@ const Exist = async (user) => {
       return false;
     }
 };
-
-public_users.get("/allusers",async (req,res)=>{
-  let users = await Data.find();
-  res.send(users)
-})
 
 public_users.post("/register", async (req, res) => {
   const { username, password } = req.body;
@@ -42,32 +35,38 @@ public_users.post("/register", async (req, res) => {
   }
 });
 
-
-
-// Get the book list available in the shop
 public_users.get('/',async function (req, res) {
-  res.send(await Book.find({},{_id:0,__v:0}))
+  res.send(await Book.find({},{_id:0,__v:0,file:0}))
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn', async function (req, res) {
+public_users.get('/getbook/:isbn', async function (req, res) {
   let is = req.params.isbn;
-  res.send(await Book.find({ibsn:is},{_id:0,__v:0}))
+  const fileName = await Book.findOne({ibsn:is},{_id:0,__v:0})
+  fs.readFile(`./Books/${fileName.file}`, (err,data)=>{
+    if (err){
+        res.send("Error!");
+        console.log(err)
+    } else{
+        res.end(data)
+    }
+})
 });
   
-// Get book details based on author
+public_users.get('/isbn/:isbn', async function (req, res) {
+  let is = req.params.isbn;
+  res.send(await Book.find({ibsn:is},{_id:0,__v:0,file:0}))
+});
+  
 public_users.get('/author/:author',async (req, res) => {
-  res.send(await Book.find({author:author},{_id:0,__v:0}))
-
+  const author = req.params.author
+  res.send(await Book.find({author:author},{_id:0,__v:0,file:0}))
 });
 
-// Get all books based on title
 public_users.get('/title/:title', async (req, res) => {
   const title = req.params.title
-  res.send(await Book.find({title:title},{_id:0,__v:0}))
+  res.send(await Book.find({title:title},{_id:0,__v:0,file:0}))
 });
 
-//  Get book review
 public_users.get('/review/:isbn',async (req, res) => {
   let isbn = req.params.isbn;
   const book = await Book.findOne({ibsn:isbn},{reviews:1,_id:0,__v:0})
